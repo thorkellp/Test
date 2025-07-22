@@ -8,9 +8,9 @@
  * License: GPL v2 or later
  * Text Domain: husfelag-bokhald
  * Domain Path: /languages
- * Requires at least: 5.0
- * Tested up to: 6.4
- * Requires PHP: 7.4
+ * Requires at least: 6.8
+ * Tested up to: 6.8
+ * Requires PHP: 8.0
  * Network: false
  */
 
@@ -23,8 +23,8 @@ if (!defined('ABSPATH')) {
 define('HB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('HB_VERSION', '1.0.0');
-define('HB_MIN_WP_VERSION', '5.0');
-define('HB_MIN_PHP_VERSION', '7.4');
+define('HB_MIN_WP_VERSION', '6.8');
+define('HB_MIN_PHP_VERSION', '8.0');
 
 /**
  * Aðal klasi fyrir Húsfélags Bókhald
