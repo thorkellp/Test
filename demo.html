@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 Húsfélags Bókhald - Demo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .content { padding: 40px; }
+        .demo-info {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #28a745;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            margin: 10px 5px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .login-info {
+            background: #e3f2fd;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #2196f3;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Húsfélags Bókhald</h1>
+            <p>Demo kerfi tilbúið!</p>
+        </div>
+        <div class="content">
+            <div class="demo-info">
+                <h2>🎉 Demo kerfið er tilbúið!</h2>
+                <p>WordPress plugin með 10 íbúðum og raunhæfum demo gögnum.</p>
+            </div>
+            
+            <div class="login-info">
+                <h3>🔑 Aðgangsupplýsingar</h3>
+                <p><strong>Notendanafn:</strong> admin</p>
+                <p><strong>Lykilorð:</strong> demo123</p>
+                <p><strong>URL:</strong> <a href="http://localhost:8080/wp-admin/">http://localhost:8080/wp-admin/</a></p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://localhost:8080/wp-admin/admin.php?page=husfelag-bokhald" class="btn btn-success" target="_blank">
+                    🏠 Opna Húsfélags Bókhald
+                </a>
+                <a href="http://localhost:8080/wp-admin/" class="btn" target="_blank">
+                    ⚙️ WordPress Admin
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
