@@ -178,6 +178,15 @@ class HusfelagBokhald {
             'husfelag-skyrslur',
             array($this, 'admin_page_skyrslur')
         );
+        
+        add_submenu_page(
+            'husfelag-bokhald',
+            'Banka API',
+            'Banka API',
+            'manage_options',
+            'husfelag-bank-api',
+            array($this, 'admin_page_bank_api')
+        );
     }
     
     /**
@@ -235,6 +244,13 @@ class HusfelagBokhald {
      */
     public function admin_page_skyrslur() {
         include HB_PLUGIN_PATH . 'includes/admin-skyrslur.php';
+    }
+    
+    /**
+     * Banka API síða
+     */
+    public function admin_page_bank_api() {
+        include HB_PLUGIN_PATH . 'includes/admin-bank-api.php';
     }
 }
 
