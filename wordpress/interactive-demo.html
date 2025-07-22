@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏠 Húsfélags Bókhald - Interaktíft Demo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f1f1f1;
+            color: #23282d;
+            line-height: 1.4;
+        }
+
+        .wp-admin {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* WordPress Admin Menu */
+        .admin-menu {
+            width: 160px;
+            background: #23282d;
+            color: #eee;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .admin-menu h2 {
+            background: #0073aa;
+            color: white;
+            padding: 15px;
+            margin: 0;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .admin-menu ul {
+            list-style: none;
+        }
+
+        .admin-menu li {
+            border-bottom: 1px solid #32373c;
+        }
+
+        .admin-menu a {
+            display: block;
+            padding: 12px 15px;
+            color: #eee;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .admin-menu a:hover, .admin-menu a.active {
+            background: #0073aa;
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 160px;
+            flex: 1;
+            padding: 20px;
+        }
+
+        .wrap {
+            max-width: 1200px;
+        }
+
+        .page-title {
+            font-size: 23px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            color: #23282d;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border: 1px solid #c3c4c7;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+        }
+
+        .card-header {
+            background: #f9f9f9;
+            border-bottom: 1px solid #c3c4c7;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #0073aa 0%, #005177 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,115,170,0.3);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Tables */
+        .wp-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .wp-list-table th,
+        .wp-list-table td {
+            padding: 12px;
+            border-bottom: 1px solid #c3c4c7;
+            text-align: left;
+        }
+
+        .wp-list-table th {
+            background: #f9f9f9;
+            font-weight: 600;
+        }
+
+        .wp-list-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Forms */
+        .form-table {
+            width: 100%;
+        }
+
+        .form-table th {
+            width: 200px;
+            padding: 20px 10px 20px 0;
+            vertical-align: top;
+            font-weight: 600;
+        }
+
+        .form-table td {
+            padding: 15px 10px;
+        }
+
+        .form-table input[type="text"],
+        .form-table input[type="email"],
+        .form-table input[type="number"],
+        .form-table select,
+        .form-table textarea {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px 12px;
+            border: 1px solid #8c8f94;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Buttons */
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #0073aa;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .button:hover {
+            background: #005177;
+        }
+
+        .button-secondary {
+            background: #f6f7f7;
+            color: #2c3338;
+            border: 1px solid #c3c4c7;
+        }
+
+        .button-secondary:hover {
+            background: #f0f0f1;
+        }
+
+        .button-danger {
+            background: #d63638;
+        }
+
+        .button-danger:hover {
+            background: #b32d2e;
+        }
+
+        /* Hide all sections initially */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Demo banner */
+        .demo-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-menu {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wp-admin">
+        <!-- Admin Menu -->
+        <div class="admin-menu">
+            <h2>🏠 Húsfélags Bókhald</h2>
+            <ul>
+                <li><a href="#" onclick="showSection('dashboard')" class="active">📊 Yfirlit</a></li>
+                <li><a href="#" onclick="showSection('ibudaskra')">�� Íbúðaskrá</a></li>
+                <li><a href="#" onclick="showSection('faerslur')">💰 Færslur</a></li>
+                <li><a href="#" onclick="showSection('gjold')">🏠 Mánaðargjöld</a></li>
+                <li><a href="#" onclick="showSection('skyrslur')">📊 Skýrslur</a></li>
+                <li><a href="#" onclick="showSection('bankapi')">🏦 Banka API</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="demo-banner">
+                🎉 <strong>INTERAKTÍFT DEMO</strong> - Prófaðu öll eiginleikar Húsfélags Bókhald kerfisins! 🎉
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <div class="wrap">
+                    <h1 class="page-title">Yfirlit - Húsfélags Bókhald</h1>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">10</div>
+                            <div class="stat-label">Íbúðir í skrá</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">2.850.000 kr</div>
+                            <div class="stat-label">Heildar tekjur í mánuði</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">1.750.000 kr</div>
+                            <div class="stat-label">Heildar gjöld í mánuði</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">+1.100.000 kr</div>
+                            <div class="stat-label">Nettó afkoma</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">📈 Nýjustu færslur</div>
+                        <div class="card-content">
+                            <table class="wp-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dagsetning</th>
+                                        <th>Lýsing</th>
+                                        <th>Upphæð</th>
+                                        <th>Tegund</th>
+                                        <th>Flokkur</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-15</td>
+                                        <td>Mánaðargjöld janúar 2024</td>
+                                        <td style="color: #00a32a;">+2.850.000 kr</td>
+                                        <td>Tekjur</td>
+                                        <td>Mánaðargjöld</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-12</td>
+                                        <td>Rafmagnsreikningur</td>
+                                        <td style="color: #d63638;">-125.000 kr</td>
+                                        <td>Gjöld</td>
+                                        <td>Rafmagn</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-10</td>
+                                        <td>Tryggingagjald</td>
+                                        <td style="color: #d63638;">-85.000 kr</td>
+                                        <td>Gjöld</td>
+                                        <td>Tryggingar</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Íbúðaskrá Section -->
+            <div id="ibudaskra" class="section">
+                <div class="wrap">
+                    <h1 class="page-title">Íbúðaskrá</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">➕ Bæta við nýrri íbúð</div>
+                        <div class="card-content">
+                            <table class="form-table">
+                                <tr>
+                                    <th><label>Íbúðanúmer:</label></th>
+                                    <td><input type="text" placeholder="t.d. 101" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Eigandi:</label></th>
+                                    <td><input type="text" placeholder="Fullt nafn" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Netfang:</label></th>
+                                    <td><input type="email" placeholder="email@example.is" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Símanúmer:</label></th>
+                                    <td><input type="text" placeholder="581-1234" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Fermetrar:</label></th>
+                                    <td><input type="number" step="0.1" placeholder="85.5" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Hlutdeild:</label></th>
+                                    <td><input type="number" step="0.0001" placeholder="0.0855" /></td>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <td><button class="button" onclick="alert('Demo: Íbúð væri vistuð!')">Vista íbúð</button></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">🏠 Skráðar íbúðir</div>
+                        <div class="card-content">
+                            <table class="wp-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>Íbúð</th>
+                                        <th>Eigandi</th>
+                                        <th>Netfang</th>
+                                        <th>Símanúmer</th>
+                                        <th>Fermetrar</th>
+                                        <th>Hlutdeild</th>
+                                        <th>Aðgerðir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>101</strong></td>
+                                        <td>Jón Jónsson</td>
+                                        <td>jon@email.is</td>
+                                        <td>581-1234</td>
+                                        <td>85.5 m²</td>
+                                        <td>8.55%</td>
+                                        <td>
+                                            <button class="button button-secondary" onclick="alert('Demo: Breyta íbúð')">Breyta</button>
+                                            <button class="button button-danger" onclick="alert('Demo: Eyða íbúð')">Eyða</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>102</strong></td>
+                                        <td>Anna Sigurðardóttir</td>
+                                        <td>anna@email.is</td>
+                                        <td>581-2345</td>
+                                        <td>92.0 m²</td>
+                                        <td>9.20%</td>
+                                        <td>
+                                            <button class="button button-secondary" onclick="alert('Demo: Breyta íbúð')">Breyta</button>
+                                            <button class="button button-danger" onclick="alert('Demo: Eyða íbúð')">Eyða</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>201</strong></td>
+                                        <td>Pétur Pétursson</td>
+                                        <td>petur@email.is</td>
+                                        <td>581-3456</td>
+                                        <td>78.3 m²</td>
+                                        <td>7.83%</td>
+                                        <td>
+                                            <button class="button button-secondary" onclick="alert('Demo: Breyta íbúð')">Breyta</button>
+                                            <button class="button button-danger" onclick="alert('Demo: Eyða íbúð')">Eyða</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Færslur Section -->
+            <div id="faerslur" class="section">
+                <div class="wrap">
+                    <h1 class="page-title">Fjárhagsfærslur</h1>
+                    
+                    <div class="card">
+                        <div class="card-header">➕ Ný færsla</div>
+                        <div class="card-content">
+                            <table class="form-table">
+                                <tr>
+                                    <th><label>Dagsetning:</label></th>
+                                    <td><input type="date" value="2024-01-15" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Lýsing:</label></th>
+                                    <td><input type="text" placeholder="Lýsing á færslu" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Upphæð:</label></th>
+                                    <td><input type="number" step="0.01" placeholder="0.00" /></td>
+                                </tr>
+                                <tr>
+                                    <th><label>Tegund:</label></th>
+                                    <td>
+                                        <select>
+                                            <option value="tekjur">Tekjur</option>
+                                            <option value="gjold">Gjöld</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th><label>Flokkur:</label></th>
+                                    <td>
+                                        <select>
+                                            <option value="Mánaðargjöld">Mánaðargjöld</option>
+                                            <option value="Rafmagn">Rafmagn</option>
+                                            <option value="Hiti">Hiti</option>
+                                            <option value="Tryggingar">Tryggingar</option>
+                                            <option value="Viðhald">Viðhald</option>
+                                            <option value="Annað">Annað</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <td><button class="button" onclick="alert('Demo: Færsla væri vistuð!')">Vista færslu</button></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">💰 Allar færslur</div>
+                        <div class="card-content">
+                            <table class="wp-list-table">
+                                <thead>
+                                    <tr>
+                                        <th>Dagsetning</th>
+                                        <th>Lýsing</th>
+                                        <th>Upphæð</th>
+                                        <th>Tegund</th>
+                                        <th>Flokkur</th>
+                                        <th>Aðgerðir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2024-01-15</td>
+                                        <td>Mánaðargjöld janúar 2024</td>
+                                        <td style="color: #00a32a;">+2.850.000 kr</td>
+                                        <td>Tekjur</td>
+                                        <td>Mánaðargjöld</td>
+                                        <td>
+                                            <button class="button button-secondary" onclick="alert('Demo: Breyta færslu')">Breyta</button>
+                                            <button class="button button-danger" onclick="alert('Demo: Eyða færslu')">Eyða</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-12</td>
+                                        <td>Rafmagnsreikningur</td>
+                                        <td style="color: #d63638;">-125.000 kr</td>
+                                        <td>Gjöld</td>
+                                        <td>Rafmagn</td>
+                                        <td>
+                                            <button class="button button-secondary" onclick="alert('Demo: Breyta færslu')">Breyta</button>
+                                            <button class="button button-danger" onclick="alert('Demo: Eyða færslu')">Eyða</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2024-01-10</td>
+                                        <td>Tryggingagjald</td>
+                                        <td style="color: #d63638;">-85.000 kr</td>
+                                        <td>Gjöld</td>
+                                        <td>Tryggingar</td>
+                                        <td>
+                                            <button class="button button-secondary" onclick="alert('Demo: Breyta færslu')">Breyta</button>
+                                            <button class="button button-danger" onclick="alert('Demo: Eyða færslu')">Eyða</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remove active class from menu items
+            const menuItems = document.querySelectorAll('.admin-menu a');
+            menuItems.forEach(item => item.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked menu item
+            event.target.classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏠 Húsfélags Bókhald Demo loaded!');
+            console.log('📊 Try clicking on different menu items to explore features');
+        });
+    </script>
+</body>
+</html>
