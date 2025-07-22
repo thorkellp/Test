@@ -3,11 +3,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Öryggisathugun
+if (!current_user_can('manage_options')) {
+    wp_die(__('Þú hefur ekki heimild til þessa.', 'husfelag-bokhald'));
+}
+
 global $wpdb;
 $table_ibuddir = $wpdb->prefix . 'hb_ibuddir';
 
-// Vinna úr form
-if (isset($_POST['hb_save_ibud']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_save_ibud')) {
+// Vinna úr form með öryggisathugun
+if (isset($_POST['hb_save_ibud']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_save_ibud') && current_user_can('manage_options')) {
     $ibudanumer = sanitize_text_field($_POST['ibudanumer']);
     $eigandi = sanitize_text_field($_POST['eigandi']);
     $netfang = sanitize_email($_POST['netfang']);
@@ -55,8 +60,8 @@ if (isset($_POST['hb_save_ibud']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_sav
     }
 }
 
-// Eyða íbúð
-if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']) && wp_verify_nonce($_GET['_wpnonce'], 'delete_ibud')) {
+// Eyða íbúð með öryggisathugun
+if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']) && wp_verify_nonce($_GET['_wpnonce'], 'delete_ibud') && current_user_can('manage_options')) {
     $id = intval($_GET['id']);
     $wpdb->update(
         $table_ibuddir,

@@ -1,8 +1,9 @@
 jQuery(document).ready(function($) {
-    // Staðfesta eyðingu
-    $('.delete-confirm').on('click', function(e) {
-        if (!confirm('Ertu viss um að þú viljir eyða þessu?')) {
+    // Staðfesta eyðingu með öryggisathugun
+    $('.delete-confirm, a[href*="action=delete"]').on('click', function(e) {
+        if (!confirm(husfelag_ajax.delete_confirm || 'Ertu viss um að þú viljir eyða þessu?')) {
             e.preventDefault();
+            return false;
         }
     });
     

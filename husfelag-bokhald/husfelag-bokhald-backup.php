@@ -8,10 +8,6 @@
  * License: GPL v2 or later
  * Text Domain: husfelag-bokhald
  * Domain Path: /languages
- * Requires at least: 5.0
- * Tested up to: 6.4
- * Requires PHP: 7.4
- * Network: false
  */
 
 // Koma í veg fyrir beinan aðgang
@@ -23,8 +19,6 @@ if (!defined('ABSPATH')) {
 define('HB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('HB_VERSION', '1.0.0');
-define('HB_MIN_WP_VERSION', '5.0');
-define('HB_MIN_PHP_VERSION', '7.4');
 
 /**
  * Aðal klasi fyrir Húsfélags Bókhald

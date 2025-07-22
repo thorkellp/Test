@@ -3,12 +3,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Öryggisathugun
+if (!current_user_can('manage_options')) {
+    wp_die(__('Þú hefur ekki heimild til þessa.', 'husfelag-bokhald'));
+}
+
 global $wpdb;
 $table_faerslur = $wpdb->prefix . 'hb_faerslur';
 $table_ibuddir = $wpdb->prefix . 'hb_ibuddir';
 
-// Vinna úr form
-if (isset($_POST['hb_save_faersla']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_save_faersla')) {
+// Vinna úr form með öryggisathugun
+if (isset($_POST['hb_save_faersla']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_save_faersla') && current_user_can('manage_options')) {
     $dagsetning = sanitize_text_field($_POST['dagsetning']);
     $lysing = sanitize_textarea_field($_POST['lysing']);
     $upphad = floatval($_POST['upphad']);
