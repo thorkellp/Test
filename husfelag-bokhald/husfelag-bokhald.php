@@ -36,6 +36,7 @@ class HusfelagBokhald {
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
         
         add_action('init', array($this, 'init'));
+        add_action('init', array($this, 'register_document_cpt'));
         add_action('admin_menu', array($this, 'admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
         add_action('wp_enqueue_scripts', array($this, 'frontend_scripts'));
@@ -61,6 +62,47 @@ class HusfelagBokhald {
      */
     public function init() {
         load_plugin_textdomain('husfelag-bokhald', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    }
+
+    /**
+     * Skrá custom post type fyrir fundargerðir
+     */
+    public function register_document_cpt() {
+        $labels = array(
+            'name'               => __('Fundargerðir', 'husfelag-bokhald'),
+            'singular_name'      => __('Fundargerð', 'husfelag-bokhald'),
+            'add_new'            => __('Skrá nýja', 'husfelag-bokhald'),
+            'add_new_item'       => __('Skrá nýja fundargerð', 'husfelag-bokhald'),
+            'edit_item'          => __('Breyta fundargerð', 'husfelag-bokhald'),
+            'new_item'           => __('Ný fundargerð', 'husfelag-bokhald'),
+            'view_item'          => __('Skoða fundargerð', 'husfelag-bokhald'),
+            'search_items'       => __('Leita í fundargerðum', 'husfelag-bokhald'),
+            'not_found'          => __('Engar fundargerðir fundust', 'husfelag-bokhald'),
+            'not_found_in_trash' => __('Engar fundargerðir í rusli', 'husfelag-bokhald'),
+        );
+
+        $args = array(
+            'labels'             => $labels,
+            'public'             => false,
+            'show_ui'            => true,
+            'show_in_menu'       => false,
+            'supports'           => array('title', 'editor', 'revisions', 'thumbnail', 'custom-fields'),
+            'capability_type'    => 'post',
+            'map_meta_cap'       => false,
+            'capabilities'       => array(
+                'publish_posts'       => 'manage_options',
+                'edit_posts'          => 'manage_options',
+                'edit_others_posts'   => 'manage_options',
+                'delete_posts'        => 'manage_options',
+                'delete_others_posts' => 'manage_options',
+                'read_private_posts'  => 'manage_options',
+                'edit_post'           => 'manage_options',
+                'delete_post'         => 'manage_options',
+                'read_post'           => 'manage_options',
+            ),
+        );
+
+        register_post_type('hb_fundargerd', $args);
     }
     
     /**
@@ -187,6 +229,23 @@ class HusfelagBokhald {
             'husfelag-bank-api',
             array($this, 'admin_page_bank_api')
         );
+
+        add_submenu_page(
+            'husfelag-bokhald',
+            'Fundargerðir',
+            'Fundargerðir',
+            'manage_options',
+            'edit.php?post_type=hb_fundargerd'
+        );
+
+        add_submenu_page(
+            'husfelag-bokhald',
+            'Skrá fundargerð',
+            'Skrá fundargerð',
+            'manage_options',
+            'husfelag-fundargerdir',
+            array($this, 'admin_page_fundargerdir')
+        );
     }
     
     /**
@@ -251,6 +310,13 @@ class HusfelagBokhald {
      */
     public function admin_page_bank_api() {
         include HB_PLUGIN_PATH . 'includes/admin-bank-api.php';
+    }
+
+    /**
+     * Fundargerðir síða
+     */
+    public function admin_page_fundargerdir() {
+        include HB_PLUGIN_PATH . 'includes/admin-fundargerdir.php';
     }
 }
 
