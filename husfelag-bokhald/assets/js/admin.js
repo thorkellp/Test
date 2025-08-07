@@ -12,29 +12,6 @@ jQuery(document).ready(function($) {
         $('input[name="gjald_ids[]"]').prop('checked', this.checked);
     });
     
-    // Uppfæra flokk þegar tegund breytist
-    $('#tegund').on('change', function() {
-        updateFlokkur();
-    });
-    
-    function updateFlokkur() {
-        const tegund = $('#tegund').val();
-        const $flokkur = $('#flokkur');
-        
-        const flokkar = {
-            'tekjur': ['Mánaðargjöld', 'Sérstök gjöld', 'Vextir', 'Annað'],
-            'gjold': ['Viðhald', 'Þrif', 'Tryggingar', 'Rafmagn', 'Hiti', 'Vatn', 'Umsýsla', 'Annað']
-        };
-        
-        $flokkur.empty().append('<option value="">Veldu flokk</option>');
-        
-        if (tegund && flokkar[tegund]) {
-            $.each(flokkar[tegund], function(i, flokkur) {
-                $flokkur.append('<option value="' + flokkur + '">' + flokkur + '</option>');
-            });
-        }
-    }
-    
     // Validation fyrir form
     $('form').on('submit', function(e) {
         const requiredFields = $(this).find('[required]');

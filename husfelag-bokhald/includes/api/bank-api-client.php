@@ -284,8 +284,6 @@ class HB_Bank_API_Client {
             'dagsetning' => date('Y-m-d', strtotime($transaction['bookingDate'] ?? $transaction['valueDate'])),
             'lysing' => $this->clean_transaction_description($transaction['remittanceInformation'] ?? $transaction['additionalInformation'] ?? 'Bankafærsla'),
             'upphad' => $amount,
-            'tegund' => $is_debit ? 'gjold' : 'tekjur',
-            'flokkur' => $this->categorize_transaction($transaction),
             'kvittun' => $transaction['transactionId'] ?? '',
             'bank_reference' => $transaction['transactionId'] ?? ''
         );

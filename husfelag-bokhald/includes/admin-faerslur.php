@@ -11,29 +11,30 @@ if (!current_user_can('manage_options')) {
 global $wpdb;
 $table_faerslur = $wpdb->prefix . 'hb_faerslur';
 $table_ibuddir = $wpdb->prefix . 'hb_ibuddir';
+$table_reikningar = $wpdb->prefix . 'hb_reikningar';
 
 // Vinna úr form með öryggisathugun
 if (isset($_POST['hb_save_faersla']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_save_faersla') && current_user_can('manage_options')) {
     $dagsetning = sanitize_text_field($_POST['dagsetning']);
     $lysing = sanitize_textarea_field($_POST['lysing']);
     $upphad = floatval($_POST['upphad']);
-    $tegund = sanitize_text_field($_POST['tegund']);
-    $flokkur = sanitize_text_field($_POST['flokkur']);
+    $debet_reikning_id = intval($_POST['debet_reikning_id']);
+    $kredit_reikning_id = intval($_POST['kredit_reikning_id']);
     $ibudanumer = sanitize_text_field($_POST['ibudanumer']);
     $kvittun = sanitize_text_field($_POST['kvittun']);
-    
+
     $result = $wpdb->insert(
         $table_faerslur,
         array(
             'dagsetning' => $dagsetning,
             'lysing' => $lysing,
             'upphad' => $upphad,
-            'tegund' => $tegund,
-            'flokkur' => $flokkur,
+            'debet_reikning_id' => $debet_reikning_id,
+            'kredit_reikning_id' => $kredit_reikning_id,
             'ibudanumer' => $ibudanumer ? $ibudanumer : null,
             'kvittun' => $kvittun
         ),
-        array('%s', '%s', '%f', '%s', '%s', '%s', '%s')
+        array('%s', '%s', '%f', '%d', '%d', '%s', '%s')
     );
     
     if ($result) {
@@ -50,22 +51,13 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']) 
     echo '<div class="notice notice-success"><p>Fjárhagsfærsla eytt!</p></div>';
 }
 
-// Sækja íbúðir fyrir dropdown
+// Sækja íbúðir og reikninga fyrir dropdown
 $ibuddir = $wpdb->get_results("SELECT ibudanumer, eigandi FROM $table_ibuddir WHERE virkur = 1 ORDER BY ibudanumer");
+$reikningar = $wpdb->get_results("SELECT id, nafn FROM $table_reikningar ORDER BY numer");
 
 // Sækja færslur með síun
 $where_clause = "WHERE 1=1";
 $search_params = array();
-
-if (isset($_GET['tegund']) && $_GET['tegund'] != '') {
-    $where_clause .= " AND tegund = %s";
-    $search_params[] = $_GET['tegund'];
-}
-
-if (isset($_GET['flokkur']) && $_GET['flokkur'] != '') {
-    $where_clause .= " AND flokkur = %s";
-    $search_params[] = $_GET['flokkur'];
-}
 
 if (isset($_GET['manudur']) && $_GET['manudur'] != '') {
     $where_clause .= " AND MONTH(dagsetning) = %d AND YEAR(dagsetning) = %d";
@@ -73,18 +65,15 @@ if (isset($_GET['manudur']) && $_GET['manudur'] != '') {
     $search_params[] = date('Y', strtotime($_GET['manudur'] . '-01'));
 }
 
-$query = "SELECT * FROM $table_faerslur $where_clause ORDER BY dagsetning DESC, stofnad DESC";
+$query = "SELECT f.*, d.nafn AS debet_nafn, k.nafn AS kredit_nafn FROM $table_faerslur f
+    LEFT JOIN $table_reikningar d ON f.debet_reikning_id = d.id
+    LEFT JOIN $table_reikningar k ON f.kredit_reikning_id = k.id
+    $where_clause ORDER BY dagsetning DESC, stofnad DESC";
 if (!empty($search_params)) {
     $faerslur = $wpdb->get_results($wpdb->prepare($query, $search_params));
 } else {
     $faerslur = $wpdb->get_results($query);
 }
-
-// Flokkar fyrir dropdown
-$flokkar = array(
-    'tekjur' => array('Mánaðargjöld', 'Sérstök gjöld', 'Vextir', 'Annað'),
-    'gjold' => array('Viðhald', 'Þrif', 'Tryggingar', 'Rafmagn', 'Hiti', 'Vatn', 'Umsýsla', 'Annað')
-);
 ?>
 
 <div class="wrap">
@@ -105,20 +94,24 @@ $flokkar = array(
                     </td>
                 </tr>
                 <tr>
-                    <th><label for="tegund">Tegund</label></th>
+                    <th><label for="debet_reikning_id">Debet reikningur</label></th>
                     <td>
-                        <select id="tegund" name="tegund" required onchange="updateFlokkur()">
-                            <option value="">Veldu tegund</option>
-                            <option value="tekjur">Tekjur</option>
-                            <option value="gjold">Gjöld</option>
+                        <select id="debet_reikning_id" name="debet_reikning_id" required>
+                            <option value="">Veldu reikning</option>
+                            <?php foreach ($reikningar as $r): ?>
+                                <option value="<?php echo esc_attr($r->id); ?>"><?php echo esc_html($r->nafn); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </td>
                 </tr>
                 <tr>
-                    <th><label for="flokkur">Flokkur</label></th>
+                    <th><label for="kredit_reikning_id">Kredit reikningur</label></th>
                     <td>
-                        <select id="flokkur" name="flokkur" required>
-                            <option value="">Veldu fyrst tegund</option>
+                        <select id="kredit_reikning_id" name="kredit_reikning_id" required>
+                            <option value="">Veldu reikning</option>
+                            <?php foreach ($reikningar as $r): ?>
+                                <option value="<?php echo esc_attr($r->id); ?>"><?php echo esc_html($r->nafn); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </td>
                 </tr>
@@ -166,15 +159,9 @@ $flokkar = array(
         <h2>Síun færslna</h2>
         <form method="get" action="">
             <input type="hidden" name="page" value="husfelag-faerslur" />
-            
-            <select name="tegund">
-                <option value="">Allar tegundir</option>
-                <option value="tekjur" <?php selected($_GET['tegund'] ?? '', 'tekjur'); ?>>Tekjur</option>
-                <option value="gjold" <?php selected($_GET['gjold'] ?? '', 'gjold'); ?>>Gjöld</option>
-            </select>
-            
+
             <input type="month" name="manudur" value="<?php echo $_GET['manudur'] ?? ''; ?>" />
-            
+
             <input type="submit" class="button" value="Sía" />
             <a href="?page=husfelag-faerslur" class="button">Hreinsa síu</a>
         </form>
@@ -190,38 +177,30 @@ $flokkar = array(
                         <th>Dagsetning</th>
                         <th>Lýsing</th>
                         <th>Upphæð</th>
-                        <th>Tegund</th>
-                        <th>Flokkur</th>
+                        <th>Debet</th>
+                        <th>Kredit</th>
                         <th>Íbúð</th>
                         <th>Kvittun</th>
                         <th>Aðgerðir</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
-                    $samtals_tekjur = 0;
-                    $samtals_gjold = 0;
-                    foreach ($faerslur as $faersla): 
-                        $class = $faersla->tegund == 'tekjur' ? 'hb-income' : 'hb-expense';
-                        if ($faersla->tegund == 'tekjur') {
-                            $samtals_tekjur += $faersla->upphad;
-                        } else {
-                            $samtals_gjold += $faersla->upphad;
-                        }
+                    <?php
+                    $samtals = 0;
+                    foreach ($faerslur as $faersla):
+                        $samtals += $faersla->upphad;
                     ?>
                         <tr>
                             <td><?php echo date('d.m.Y', strtotime($faersla->dagsetning)); ?></td>
                             <td><?php echo esc_html($faersla->lysing); ?></td>
-                            <td class="<?php echo $class; ?>">
-                                <?php echo number_format($faersla->upphad, 0, ',', '.'); ?> kr.
-                            </td>
-                            <td><?php echo ucfirst($faersla->tegund); ?></td>
-                            <td><?php echo esc_html($faersla->flokkur); ?></td>
+                            <td><?php echo number_format($faersla->upphad, 0, ',', '.'); ?> kr.</td>
+                            <td><?php echo esc_html($faersla->debet_nafn); ?></td>
+                            <td><?php echo esc_html($faersla->kredit_nafn); ?></td>
                             <td><?php echo esc_html($faersla->ibudanumer); ?></td>
                             <td><?php echo esc_html($faersla->kvittun); ?></td>
                             <td>
-                                <a href="?page=husfelag-faerslur&action=delete&id=<?php echo $faersla->id; ?>&_wpnonce=<?php echo wp_create_nonce('delete_faersla'); ?>" 
-                                   class="button button-small" 
+                                <a href="?page=husfelag-faerslur&action=delete&id=<?php echo $faersla->id; ?>&_wpnonce=<?php echo wp_create_nonce('delete_faersla'); ?>"
+                                   class="button button-small"
                                    onclick="return confirm('Ertu viss um að þú viljir eyða þessari færslu?')">Eyða</a>
                             </td>
                         </tr>
@@ -230,9 +209,7 @@ $flokkar = array(
                 <tfoot>
                     <tr>
                         <th colspan="2">Samtals</th>
-                        <th class="hb-income">Tekjur: <?php echo number_format($samtals_tekjur, 0, ',', '.'); ?> kr.</th>
-                        <th class="hb-expense">Gjöld: <?php echo number_format($samtals_gjold, 0, ',', '.'); ?> kr.</th>
-                        <th colspan="4">Mismunur: <?php echo number_format($samtals_tekjur - $samtals_gjold, 0, ',', '.'); ?> kr.</th>
+                        <th colspan="6"><?php echo number_format($samtals, 0, ',', '.'); ?> kr.</th>
                     </tr>
                 </tfoot>
             </table>
@@ -243,24 +220,5 @@ $flokkar = array(
 </div>
 
 <script>
-function updateFlokkur() {
-    const tegund = document.getElementById('tegund').value;
-    const flokkur = document.getElementById('flokkur');
-    
-    const flokkar = {
-        'tekjur': ['Mánaðargjöld', 'Sérstök gjöld', 'Vextir', 'Annað'],
-        'gjold': ['Viðhald', 'Þrif', 'Tryggingar', 'Rafmagn', 'Hiti', 'Vatn', 'Umsýsla', 'Annað']
-    };
-    
-    flokkur.innerHTML = '<option value="">Veldu flokk</option>';
-    
-    if (tegund && flokkar[tegund]) {
-        flokkar[tegund].forEach(function(f) {
-            const option = document.createElement('option');
-            option.value = f;
-            option.textContent = f;
-            flokkur.appendChild(option);
-        });
-    }
-}
+// Engar sérstakar javascript-aðgerðir í dag
 </script>

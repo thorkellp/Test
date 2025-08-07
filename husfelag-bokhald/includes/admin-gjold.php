@@ -72,17 +72,19 @@ if (isset($_POST['hb_mark_paid']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_mar
             );
             
             // Bæta við fjárhagsfærslu
+            $bank_account = intval(get_option('hb_sync_bank_account'));
+            $income_account = intval(get_option('hb_sync_income_account'));
             $wpdb->insert(
                 $table_faerslur,
                 array(
                     'dagsetning' => current_time('mysql'),
                     'lysing' => 'Mánaðargjald - ' . $gjald->ibudanumer . ' (' . $gjald->manudur . '/' . $gjald->ar . ')',
                     'upphad' => $gjald->samtals,
-                    'tegund' => 'tekjur',
-                    'flokkur' => 'Mánaðargjöld',
+                    'debet_reikning_id' => $bank_account,
+                    'kredit_reikning_id' => $income_account,
                     'ibudanumer' => $gjald->ibudanumer
                 ),
-                array('%s', '%s', '%f', '%s', '%s', '%s')
+                array('%s', '%s', '%f', '%d', '%d', '%s')
             );
         }
     }

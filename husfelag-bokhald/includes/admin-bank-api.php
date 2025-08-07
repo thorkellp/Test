@@ -35,11 +35,17 @@ if (isset($_POST['hb_save_bank_settings']) && wp_verify_nonce($_POST['hb_nonce']
     $client_secret_raw = sanitize_text_field($_POST['client_secret']);
     $client_secret = hb_encrypt_secret($client_secret_raw);
     $account_id = sanitize_text_field($_POST['account_id']);
+    $sync_bank_account = intval($_POST['sync_bank_account']);
+    $sync_income_account = intval($_POST['sync_income_account']);
+    $sync_expense_account = intval($_POST['sync_expense_account']);
 
     update_option('hb_selected_bank', $bank, false);
     update_option('hb_' . $bank . '_client_id', $client_id, false);
     update_option('hb_' . $bank . '_client_secret', $client_secret, false);
     update_option('hb_bank_account_id', $account_id, false);
+    update_option('hb_sync_bank_account', $sync_bank_account, false);
+    update_option('hb_sync_income_account', $sync_income_account, false);
+    update_option('hb_sync_expense_account', $sync_expense_account, false);
     
     echo '<div class="notice notice-success"><p>API stillingar vistaðar!</p></div>';
 }
@@ -82,33 +88,46 @@ if (isset($_POST['hb_sync_transactions']) && wp_verify_nonce($_POST['hb_nonce'],
             if (isset($transactions['transactions']) && is_array($transactions['transactions'])) {
                 global $wpdb;
                 $table_faerslur = $wpdb->prefix . 'hb_faerslur';
-                
+
+                $bank_account = intval(get_option('hb_sync_bank_account'));
+                $income_account = intval(get_option('hb_sync_income_account'));
+                $expense_account = intval(get_option('hb_sync_expense_account'));
+
                 $imported_count = 0;
                 foreach ($transactions['transactions'] as $transaction) {
                     $hb_transaction = $api_client->convert_transaction_to_hb_format($transaction);
-                    
+
                     // Athuga hvort færsla sé þegar til
                     $exists = $wpdb->get_var($wpdb->prepare(
                         "SELECT COUNT(*) FROM $table_faerslur WHERE kvittun = %s AND dagsetning = %s",
                         $hb_transaction['kvittun'],
                         $hb_transaction['dagsetning']
                     ));
-                    
+
                     if (!$exists) {
+                        $upphad = $hb_transaction['upphad'];
+                        if ($upphad >= 0) {
+                            $debet = $bank_account;
+                            $kredit = $income_account;
+                        } else {
+                            $debet = $expense_account;
+                            $kredit = $bank_account;
+                            $upphad = abs($upphad);
+                        }
+
                         $result = $wpdb->insert(
                             $table_faerslur,
                             array(
                                 'dagsetning' => $hb_transaction['dagsetning'],
                                 'lysing' => $hb_transaction['lysing'] . ' (Sjálfvirk innflutningur)',
-                                'upphad' => $hb_transaction['upphad'],
-                                'tegund' => $hb_transaction['tegund'],
-                                'flokkur' => $hb_transaction['flokkur'],
-                                'kvittun' => $hb_transaction['kvittun'],
-                                'notandi_id' => get_current_user_id()
+                                'upphad' => $upphad,
+                                'debet_reikning_id' => $debet,
+                                'kredit_reikning_id' => $kredit,
+                                'kvittun' => $hb_transaction['kvittun']
                             ),
-                            array('%s', '%s', '%f', '%s', '%s', '%s', '%d')
+                            array('%s', '%s', '%f', '%d', '%d', '%s')
                         );
-                        
+
                         if ($result) {
                             $imported_count++;
                         }
@@ -132,6 +151,13 @@ $client_id = get_option('hb_' . $selected_bank . '_client_id', '');
 $client_secret_encrypted = get_option('hb_' . $selected_bank . '_client_secret', '');
 $client_secret = $client_secret_encrypted ? hb_decrypt_secret($client_secret_encrypted) : '';
 $account_id = get_option('hb_bank_account_id', '');
+$sync_bank_account = intval(get_option('hb_sync_bank_account'));
+$sync_income_account = intval(get_option('hb_sync_income_account'));
+$sync_expense_account = intval(get_option('hb_sync_expense_account'));
+
+global $wpdb;
+$table_reikningar = $wpdb->prefix . 'hb_reikningar';
+$reikningar = $wpdb->get_results("SELECT id, nafn FROM $table_reikningar ORDER BY numer");
 
 $available_banks = array(
     'islandsbanki' => 'Íslandsbanki',
@@ -194,10 +220,43 @@ $available_banks = array(
                 <tr>
                     <th><label for="account_id">Reikningsnúmer</label></th>
                     <td>
-                        <input type="text" id="account_id" name="account_id" 
-                               value="<?php echo esc_attr($account_id); ?>" 
+                        <input type="text" id="account_id" name="account_id"
+                               value="<?php echo esc_attr($account_id); ?>"
                                placeholder="t.d. 0101-01-123456" />
                         <p class="description">Bankareikningur húsfélagsins</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="sync_bank_account">Debet bankareikningur</label></th>
+                    <td>
+                        <select id="sync_bank_account" name="sync_bank_account">
+                            <?php foreach ($reikningar as $r): ?>
+                                <option value="<?php echo esc_attr($r->id); ?>" <?php selected($sync_bank_account, $r->id); ?>><?php echo esc_html($r->nafn); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">Reikningur sem bankafærslur bókfæra sem debet</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="sync_income_account">Kredit tekjureikningur</label></th>
+                    <td>
+                        <select id="sync_income_account" name="sync_income_account">
+                            <?php foreach ($reikningar as $r): ?>
+                                <option value="<?php echo esc_attr($r->id); ?>" <?php selected($sync_income_account, $r->id); ?>><?php echo esc_html($r->nafn); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">Tekjureikningur sem fær kredit við innborganir</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="sync_expense_account">Debet gjaldareikningur</label></th>
+                    <td>
+                        <select id="sync_expense_account" name="sync_expense_account">
+                            <?php foreach ($reikningar as $r): ?>
+                                <option value="<?php echo esc_attr($r->id); ?>" <?php selected($sync_expense_account, $r->id); ?>><?php echo esc_html($r->nafn); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">Gjaldareikningur sem fær debet við úttektir</p>
                     </td>
                 </tr>
             </table>

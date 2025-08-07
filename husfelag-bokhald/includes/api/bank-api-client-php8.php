@@ -49,7 +49,7 @@ class HB_Bank_API_Client {
     private ?string $access_token = null;
     private ?string $consent_id = null;
     
-    private readonly array $bank_endpoints = [
+    private array $bank_endpoints = [
         BankType::ISLANDSBANKI->value => [
             'name' => 'Íslandsbanki',
             'base_url' => 'https://api.islandsbanki.is/psd2/v1',
@@ -283,13 +283,11 @@ class HB_Bank_API_Client {
         return [
             'dagsetning' => date('Y-m-d', strtotime($transaction['bookingDate'] ?? $transaction['valueDate'])),
             'lysing' => $this->cleanTransactionDescription(
-                $transaction['remittanceInformation'] ?? 
-                $transaction['additionalInformation'] ?? 
+                $transaction['remittanceInformation'] ??
+                $transaction['additionalInformation'] ??
                 'Bankafærsla'
             ),
             'upphad' => $amount,
-            'tegund' => $is_debit ? 'gjold' : 'tekjur',
-            'flokkur' => $this->categorizeTransaction($transaction),
             'kvittun' => $transaction['transactionId'] ?? '',
             'bank_reference' => $transaction['transactionId'] ?? ''
         ];

@@ -129,6 +129,17 @@ class HusfelagBokhald {
             UNIQUE KEY ibudanumer (ibudanumer)
         ) $charset_collate;";
         
+        // Tafla fyrir reikninga (Chart of Accounts)
+        $table_reikningar = $wpdb->prefix . 'hb_reikningar';
+        $sql_reikningar = "CREATE TABLE $table_reikningar (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            nafn varchar(100) NOT NULL,
+            flokkur enum('asset','liability','income','expense') NOT NULL,
+            numer varchar(20) NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY numer (numer)
+        ) $charset_collate;";
+
         // Tafla fyrir fjárhagsfærslur
         $table_faerslur = $wpdb->prefix . 'hb_faerslur';
         $sql_faerslur = "CREATE TABLE $table_faerslur (
@@ -136,17 +147,17 @@ class HusfelagBokhald {
             dagsetning date NOT NULL,
             lysing text NOT NULL,
             upphad decimal(10,2) NOT NULL,
-            tegund enum('tekjur','gjold') NOT NULL,
-            flokkur varchar(50) NOT NULL,
+            debet_reikning_id mediumint(9) NOT NULL,
+            kredit_reikning_id mediumint(9) NOT NULL,
             ibudanumer varchar(10),
             kvittun varchar(255),
             stofnad datetime DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY dagsetning (dagsetning),
-            KEY tegund (tegund),
-            KEY flokkur (flokkur)
+            KEY debet_reikning_id (debet_reikning_id),
+            KEY kredit_reikning_id (kredit_reikning_id)
         ) $charset_collate;";
-        
+
         // Tafla fyrir mánaðargjöld
         $table_gjold = $wpdb->prefix . 'hb_manadargjold';
         $sql_gjold = "CREATE TABLE $table_gjold (
@@ -167,6 +178,7 @@ class HusfelagBokhald {
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_ibuddir);
+        dbDelta($sql_reikningar);
         dbDelta($sql_faerslur);
         dbDelta($sql_gjold);
     }
@@ -201,6 +213,15 @@ class HusfelagBokhald {
             'manage_options',
             'husfelag-faerslur',
             array($this, 'admin_page_faerslur')
+        );
+
+        add_submenu_page(
+            'husfelag-bokhald',
+            'Reikningar',
+            'Reikningar',
+            'manage_options',
+            'husfelag-reikningar',
+            array($this, 'admin_page_reikningar')
         );
         
         add_submenu_page(
@@ -290,7 +311,14 @@ class HusfelagBokhald {
     public function admin_page_faerslur() {
         include HB_PLUGIN_PATH . 'includes/admin-faerslur.php';
     }
-    
+
+    /**
+     * Reikningar síða
+     */
+    public function admin_page_reikningar() {
+        include HB_PLUGIN_PATH . 'includes/admin-reikningar.php';
+    }
+
     /**
      * Mánaðargjöld síða
      */
