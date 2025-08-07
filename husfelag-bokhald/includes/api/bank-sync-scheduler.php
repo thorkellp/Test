@@ -47,9 +47,12 @@ class HB_Bank_Sync_Scheduler {
     public function sync_bank_transactions() {
         $selected_bank = get_option('hb_selected_bank', '');
         $account_id = get_option('hb_bank_account_id', '');
+        $bank_account = intval(get_option('hb_sync_bank_account'));
+        $income_account = intval(get_option('hb_sync_income_account'));
+        $expense_account = intval(get_option('hb_sync_expense_account'));
         
         // Athuga hvort API sé stillt
-        if (empty($selected_bank) || empty($account_id)) {
+        if (empty($selected_bank) || empty($account_id) || !$bank_account || !$income_account || !$expense_account) {
             $this->log_sync_error('API stillingar vantar');
             return false;
         }
@@ -81,18 +84,27 @@ class HB_Bank_Sync_Scheduler {
                         ));
                         
                         if (!$exists) {
+                            $upphad = $hb_transaction['upphad'];
+                            if ($upphad >= 0) {
+                                $debet = $bank_account;
+                                $kredit = $income_account;
+                            } else {
+                                $debet = $expense_account;
+                                $kredit = $bank_account;
+                                $upphad = abs($upphad);
+                            }
+
                             $result = $wpdb->insert(
                                 $table_faerslur,
                                 array(
                                     'dagsetning' => $hb_transaction['dagsetning'],
                                     'lysing' => $hb_transaction['lysing'] . ' (Sjálfvirk samstilling)',
-                                    'upphad' => $hb_transaction['upphad'],
-                                    'tegund' => $hb_transaction['tegund'],
-                                    'flokkur' => $hb_transaction['flokkur'],
-                                    'kvittun' => $hb_transaction['kvittun'],
-                                    'notandi_id' => 1 // System user
+                                    'upphad' => $upphad,
+                                    'debet_reikning_id' => $debet,
+                                    'kredit_reikning_id' => $kredit,
+                                    'kvittun' => $hb_transaction['kvittun']
                                 ),
-                                array('%s', '%s', '%f', '%s', '%s', '%s', '%d')
+                                array('%s', '%s', '%f', '%d', '%d', '%s')
                             );
                             
                             if ($result) {
