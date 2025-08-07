@@ -3,6 +3,26 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Dulkóðunar hjálparföll
+if (!function_exists('hb_encrypt_secret')) {
+    function hb_encrypt_secret($data) {
+        $key = substr(wp_salt('auth'), 0, 32);
+        $iv = openssl_random_pseudo_bytes(16);
+        $encrypted = openssl_encrypt($data, 'AES-256-CBC', $key, 0, $iv);
+        return base64_encode($iv . $encrypted);
+    }
+}
+
+if (!function_exists('hb_decrypt_secret')) {
+    function hb_decrypt_secret($data) {
+        $key = substr(wp_salt('auth'), 0, 32);
+        $data = base64_decode($data);
+        $iv = substr($data, 0, 16);
+        $encrypted = substr($data, 16);
+        return openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+    }
+}
+
 // Öryggisathugun
 if (!current_user_can('manage_options')) {
     wp_die(__('Þú hefur ekki heimild til þessa.', 'husfelag-bokhald'));
@@ -12,13 +32,14 @@ if (!current_user_can('manage_options')) {
 if (isset($_POST['hb_save_bank_settings']) && wp_verify_nonce($_POST['hb_nonce'], 'hb_save_bank_settings') && current_user_can('manage_options')) {
     $bank = sanitize_text_field($_POST['selected_bank']);
     $client_id = sanitize_text_field($_POST['client_id']);
-    $client_secret = sanitize_text_field($_POST['client_secret']);
+    $client_secret_raw = sanitize_text_field($_POST['client_secret']);
+    $client_secret = hb_encrypt_secret($client_secret_raw);
     $account_id = sanitize_text_field($_POST['account_id']);
-    
-    update_option('hb_selected_bank', $bank);
-    update_option('hb_' . $bank . '_client_id', $client_id);
-    update_option('hb_' . $bank . '_client_secret', $client_secret);
-    update_option('hb_bank_account_id', $account_id);
+
+    update_option('hb_selected_bank', $bank, false);
+    update_option('hb_' . $bank . '_client_id', $client_id, false);
+    update_option('hb_' . $bank . '_client_secret', $client_secret, false);
+    update_option('hb_bank_account_id', $account_id, false);
     
     echo '<div class="notice notice-success"><p>API stillingar vistaðar!</p></div>';
 }
@@ -108,7 +129,8 @@ if (isset($_POST['hb_sync_transactions']) && wp_verify_nonce($_POST['hb_nonce'],
 // Núverandi stillingar
 $selected_bank = get_option('hb_selected_bank', '');
 $client_id = get_option('hb_' . $selected_bank . '_client_id', '');
-$client_secret = get_option('hb_' . $selected_bank . '_client_secret', '');
+$client_secret_encrypted = get_option('hb_' . $selected_bank . '_client_secret', '');
+$client_secret = $client_secret_encrypted ? hb_decrypt_secret($client_secret_encrypted) : '';
 $account_id = get_option('hb_bank_account_id', '');
 
 $available_banks = array(

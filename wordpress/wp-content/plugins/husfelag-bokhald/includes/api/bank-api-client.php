@@ -8,6 +8,26 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Dulkóðunar hjálparföll
+if (!function_exists('hb_encrypt_secret')) {
+    function hb_encrypt_secret($data) {
+        $key = substr(wp_salt('auth'), 0, 32);
+        $iv = openssl_random_pseudo_bytes(16);
+        $encrypted = openssl_encrypt($data, 'AES-256-CBC', $key, 0, $iv);
+        return base64_encode($iv . $encrypted);
+    }
+}
+
+if (!function_exists('hb_decrypt_secret')) {
+    function hb_decrypt_secret($data) {
+        $key = substr(wp_salt('auth'), 0, 32);
+        $data = base64_decode($data);
+        $iv = substr($data, 0, 16);
+        $encrypted = substr($data, 16);
+        return openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+    }
+}
+
 class HB_Bank_API_Client {
     
     private $bank_config;
@@ -53,7 +73,8 @@ class HB_Bank_API_Client {
         
         // Sækja stillingar úr WordPress options
         $this->bank_config['client_id'] = get_option('hb_' . $bank_code . '_client_id', '');
-        $this->bank_config['client_secret'] = get_option('hb_' . $bank_code . '_client_secret', '');
+        $encrypted_secret = get_option('hb_' . $bank_code . '_client_secret', '');
+        $this->bank_config['client_secret'] = $encrypted_secret ? hb_decrypt_secret($encrypted_secret) : '';
         
         if (empty($this->bank_config['client_id']) || empty($this->bank_config['client_secret'])) {
             throw new Exception('API stillingar vantar fyrir ' . $this->bank_config['name']);
@@ -139,7 +160,7 @@ class HB_Bank_API_Client {
         $this->consent_id = $response_body['consentId'];
         
         // Vista consent ID
-        update_option('hb_bank_consent_id', $this->consent_id);
+        update_option('hb_bank_consent_id', $this->consent_id, false);
         
         return $response_body;
     }
