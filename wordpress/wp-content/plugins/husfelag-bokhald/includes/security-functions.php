@@ -132,7 +132,8 @@ function hb_check_rate_limit($action, $limit = 10, $window = 300) {
  * Validate CSRF token
  */
 function hb_verify_request($action = 'husfelag_ajax_nonce') {
-    if (!wp_verify_nonce($_REQUEST['nonce'] ?? '', $action)) {
+    $nonce = sanitize_text_field($_REQUEST['nonce'] ?? '');
+    if (!wp_verify_nonce($nonce, $action)) {
         hb_log_security_event('Invalid nonce', "Action: $action");
         return false;
     }
